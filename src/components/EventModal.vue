@@ -39,6 +39,10 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue';
 import { formatDateTime } from '@/utils';
+import { useToast } from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-sugar.css';
+
+const $toast = useToast();
 
 interface CalendarEvent {
     id: string;
@@ -119,7 +123,7 @@ const closeModal = () => {
 
 const validateAndSave = () => {
     if (!eventData.value.allDay && new Date(eventData.value.end) <= new Date(eventData.value.start)) {
-        alert('End time must be after start time for non-all-day events.');
+        $toast.error('End time must be after start time for non-all-day events.');
         return;
     }
 
