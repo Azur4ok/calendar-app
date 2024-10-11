@@ -24,11 +24,10 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { CalendarOptions, EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core';
+import type { CalendarOptions, EventClickArg, DateSelectArg, EventDropArg, EventSourceInput } from '@fullcalendar/core';
 import EventModal from '@/components/EventModal.vue';
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
-import { formatDateTime } from '@/utils';
 
 const $toast = useToast();
 
@@ -36,7 +35,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   start: Date | string;
-  end?: Date;
+  end?: Date | string;
   color: string;
   allDay: boolean;
   notes?: string;
@@ -59,12 +58,11 @@ const handleEventClick = (info: EventClickArg) => {
 }
 
 const handleDateSelect = (info: DateSelectArg) => {
-  const endTime = new Date(info.start.getTime() + 60 * 60 * 1000);
   selectedEvent.value = {
     id: '',
     title: '',
     start: info.startStr,
-    end: endTime,
+    end: info.endStr,
     allDay: info.allDay,
     color: '#3788d8'
   };
@@ -81,11 +79,11 @@ const calendarOptions: CalendarOptions = reactive({
   },
   editable: true,
   selectable: true,
-  events: [] as CalendarEvent[],
+  events: [] as CalendarEvent[], // TODO: initialize with some sample events
   eventClick: handleEventClick,
   select: handleDateSelect,
   eventDrop: (info: EventDropArg) => {
-    const event = calendarOptions.events!.find((e: CalendarEvent) => e.id === info.event.id);
+    const event = (calendarOptions.events! as CalendarEvent[]).find((e: CalendarEvent) => e.id === info.event.id);
     if (event) {
       event.start = info.event.start as Date;
       event.end = info.event.end as Date | undefined;
@@ -94,12 +92,13 @@ const calendarOptions: CalendarOptions = reactive({
 });
 
 const saveEvent = (eventData: CalendarEvent) => {
-  const existingEventIndex = calendarOptions.events!.findIndex(e => e.id === eventData.id);
+
+  const existingEventIndex: number = (calendarOptions.events! as CalendarEvent[]).findIndex(e => e.id === eventData.id);
   if (existingEventIndex > -1) {
-    calendarOptions.events[existingEventIndex] = eventData
+    (calendarOptions.events as CalendarEvent[])[existingEventIndex] = eventData
   } else {
 
-    calendarOptions.events!.push({
+    (calendarOptions.events! as CalendarEvent[]).push({
       ...eventData,
       id: Date.now().toString()
     });
@@ -109,7 +108,7 @@ const saveEvent = (eventData: CalendarEvent) => {
 };
 
 const deleteEvent = (eventId: string) => {
-  calendarOptions.events = calendarOptions.events.filter(e => e.id !== eventId);
+  calendarOptions.events = (calendarOptions.events! as CalendarEvent[]).filter((e: CalendarEvent) => e.id !== eventId);
   showEventModal.value = false;
   $toast.success('Event removed successfully!');
 };

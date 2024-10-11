@@ -44,7 +44,7 @@ interface CalendarEvent {
     id: string;
     title: string;
     start: Date | string;
-    end?: Date;
+    end?: Date | string;
     color: string;
     allDay: boolean;
     notes?: string;
