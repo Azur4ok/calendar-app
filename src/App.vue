@@ -24,12 +24,9 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { CalendarOptions, EventClickArg, DateSelectArg, EventDropArg, EventSourceInput } from '@fullcalendar/core';
+import type { CalendarOptions, EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core';
 import EventModal from '@/components/EventModal.vue';
 import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-
-const $toast = useToast();
 
 interface CalendarEvent {
   id: string;
@@ -41,33 +38,13 @@ interface CalendarEvent {
   notes?: string;
 }
 
+const DEFAULT_COLOR = '#3788d8';
+
+const $toast = useToast();
+
+
 const showEventModal = ref(false);
 const selectedEvent = ref<CalendarEvent | null>(null);
-
-const handleEventClick = (info: EventClickArg) => {
-  selectedEvent.value = {
-    id: info.event.id,
-    title: info.event.title,
-    start: info.event.startStr,
-    end: info.event.end as Date | undefined,
-    color: info.event.backgroundColor,
-    allDay: info.event.allDay,
-    notes: info.event.extendedProps.notes
-  };
-  showEventModal.value = true;
-}
-
-const handleDateSelect = (info: DateSelectArg) => {
-  selectedEvent.value = {
-    id: '',
-    title: '',
-    start: info.startStr,
-    end: info.endStr,
-    allDay: info.allDay,
-    color: '#3788d8'
-  };
-  showEventModal.value = true;
-}
 
 const calendarOptions: CalendarOptions = reactive({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -79,26 +56,49 @@ const calendarOptions: CalendarOptions = reactive({
   },
   editable: true,
   selectable: true,
-  events: [] as CalendarEvent[], // TODO: initialize with some sample events
+  events: [],
   eventClick: handleEventClick,
   select: handleDateSelect,
   eventDrop: (info: EventDropArg) => {
-    const event = (calendarOptions.events! as CalendarEvent[]).find((e: CalendarEvent) => e.id === info.event.id);
+    const event: CalendarEvent = calendarOptions.events.find((e: CalendarEvent) => e.id === info.event.id);
     if (event) {
-      event.start = info.event.start as Date;
-      event.end = info.event.end as Date | undefined;
+      event.start = info.event.start;
+      event.end = info.event.end;
     }
   }
 });
 
+function handleEventClick(info: EventClickArg) {
+  selectedEvent.value = {
+    id: info.event.id,
+    title: info.event.title,
+    start: info.event.startStr,
+    end: info.event.end,
+    color: info.event.backgroundColor,
+    allDay: info.event.allDay,
+    notes: info.event.extendedProps.notes
+  };
+  showEventModal.value = true;
+}
+
+function handleDateSelect(info: DateSelectArg) {
+  selectedEvent.value = {
+    id: '',
+    title: '',
+    start: info.startStr,
+    end: info.endStr,
+    allDay: info.allDay,
+    color: DEFAULT_COLOR
+  };
+  showEventModal.value = true;
+}
+
 const saveEvent = (eventData: CalendarEvent) => {
-
-  const existingEventIndex: number = (calendarOptions.events! as CalendarEvent[]).findIndex(e => e.id === eventData.id);
+  const existingEventIndex: number = calendarOptions.events.findIndex((e: CalendarEvent) => e.id === eventData.id);
   if (existingEventIndex > -1) {
-    (calendarOptions.events as CalendarEvent[])[existingEventIndex] = eventData
+    calendarOptions.events[existingEventIndex] = eventData
   } else {
-
-    (calendarOptions.events! as CalendarEvent[]).push({
+    calendarOptions.events.push({
       ...eventData,
       id: Date.now().toString()
     });
@@ -108,7 +108,7 @@ const saveEvent = (eventData: CalendarEvent) => {
 };
 
 const deleteEvent = (eventId: string) => {
-  calendarOptions.events = (calendarOptions.events! as CalendarEvent[]).filter((e: CalendarEvent) => e.id !== eventId);
+  calendarOptions.events = calendarOptions.events.filter((e: CalendarEvent) => e.id !== eventId);
   showEventModal.value = false;
   $toast.success('Event removed successfully!');
 };
@@ -119,10 +119,9 @@ const closeEventModal = () => {
 }
 </script>
 
-
-<style>
+<style scoped>
 .container {
-  width: 60%;
+  width: 80%;
   margin: 0 auto;
   position: relative;
 }

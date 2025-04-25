@@ -40,9 +40,6 @@
 import { ref, computed, watch } from 'vue';
 import { formatDateTime } from '@/utils';
 import { useToast } from 'vue-toast-notification';
-import 'vue-toast-notification/dist/theme-sugar.css';
-
-const $toast = useToast();
 
 interface CalendarEvent {
     id: string;
@@ -75,7 +72,7 @@ const emit = defineEmits<{
     (e: 'delete', id: string): void;
 }>();
 
-const isNewEvent = computed(() => !props.event || !props.event.id);
+const $toast = useToast();
 
 const eventData = ref<EventFormData>({
     id: props.event?.id || '',
@@ -86,6 +83,9 @@ const eventData = ref<EventFormData>({
     allDay: props.event?.allDay || false,
     notes: props.event?.notes || ''
 });
+
+const isNewEvent = computed(() => !props.event || !props.event.id);
+
 
 const resetForm = () => {
     const now = new Date();
@@ -99,23 +99,6 @@ const resetForm = () => {
         notes: ''
     };
 };
-
-
-watch(() => props.event, (newEvent) => {
-    if (newEvent) {
-        eventData.value = {
-            id: newEvent.id || '',
-            title: newEvent.title || '',
-            start: formatDateTime(newEvent.start, newEvent.allDay),
-            end: newEvent.end ? formatDateTime(newEvent.end, newEvent.allDay) : '',
-            color: newEvent.color || '#3788d8',
-            allDay: newEvent.allDay,
-            notes: newEvent.notes || ''
-        };
-    } else {
-        resetForm();
-    }
-}, { immediate: true });
 
 const closeModal = () => {
     emit('update:modelValue', false);
@@ -148,6 +131,22 @@ const deleteEvent = () => {
     emit('delete', eventData.value.id);
     closeModal();
 };
+watch(() => props.event, (newEvent) => {
+    if (newEvent) {
+        eventData.value = {
+            id: newEvent.id || '',
+            title: newEvent.title || '',
+            start: formatDateTime(newEvent.start, newEvent.allDay),
+            end: newEvent.end ? formatDateTime(newEvent.end, newEvent.allDay) : '',
+            color: newEvent.color,
+            allDay: newEvent.allDay,
+            notes: newEvent.notes || ''
+        };
+    } else {
+        resetForm();
+    }
+}, { immediate: true });
+
 </script>
 
 <style scoped>
